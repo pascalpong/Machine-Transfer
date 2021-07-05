@@ -159,9 +159,11 @@ if($row['language']=='eng'){
             $.get("../api/get_available_machines.php",{mc_type:mc_type,limit:limit},function(data){
                 json = $.parseJSON(data);
                 
+                if(json.dataDetails==null||json.dataDetails==''){
+                    json.dataDetails.length=0;
+                }
                 
-                
-                for( var i = 0; i< json.countMcDetails ; i++){
+                for( var i = 0; i< json.dataDetails.length ; i++){
                     
                     var checkBoxSelectMc = "selectCheckBox('"+json.dataDetails[i]['mc_code']+"')";
                     
@@ -180,8 +182,12 @@ if($row['language']=='eng'){
             
             $.get("../api/get_machine_selected.php",{tx_id:tx_id,mc_type:mc_type},function(data){
                 json = $.parseJSON(data);
+
+                if(json.data==null||json.data==''){
+                    json.data.length=0;
+                }
                 
-                for( var i = 0; i< json.count ; i++){
+                for( var i = 0; i< json.data.length; i++){
                     
                     var onclickRemove = "removeCheckBox('"+json.data[i]['mc_code']+"')";
                     

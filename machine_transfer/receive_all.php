@@ -61,7 +61,13 @@ $_GET['txtype'] = $conn->detectParam($_GET['txtype']);
                 $.get('api/get_machine_tx_approved.php', {search: search, page: page, limit: limit,txtype: txtype}, function (data) {
                     json = $.parseJSON(data);
                     var kuymax = parseInt('1');
-                    for (i = 0; i < json.count; i++) {
+                    if(json.data==''||json.data==null){
+                        var count = 0;
+                    }else{
+                        var count = json.data.length;
+                    }
+
+                    for (i = 0; i < count; i++) {
                       var run=  kuymax+i ;
                         $("#tbody").append("<tr style='text-align: left;cursor: pointer;'   >");
                         $("#tbody").append("<td style='text-align: left;cursor: pointer;'  onclick='"+'javascript:window.location.href="' + linkfromx +  json.data[i]['tx_id'] +'"' + "'>" + run + " </td>");

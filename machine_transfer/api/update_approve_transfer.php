@@ -68,7 +68,7 @@ while($rowSelected = $conn->parseArray($rsSelected)){
 
 	}else{
 
-	$insertMcInfo = " INSERT INTO machine_tx_history (mc_code,mc_dept,mc_type,factory,mc_room,mc_location,transfer_ts,transfer_status,tx_id) VALUES('$machine_code','$machine_dept','$machine_type','$machine_factory','$machine_room','$machine_location',now(),'ACTIVE','$tx_id') ";
+	$insertMcInfo = " INSERT INTO machine_tx_history (mc_code,mc_dept,mc_type,factory,mc_room,mc_location,transfer_ts,transfer_status,tx_id) VALUES('$machine_code','$machine_dept','$machine_type','$machine_factory','$machine_room','$machine_location',now(),'ORIGINAL','$tx_id') ";
 	// echo $insertMcInfo; 
 	$rsUpdateMcStat = $conn->query($insertMcInfo);
 	$i++;

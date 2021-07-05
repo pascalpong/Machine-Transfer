@@ -11,7 +11,7 @@ if($_SESSION['username']=='admin'){
 
  
 
-$sql = " SELECT machine_tx.* FROM `machine_tx_details` LEFT JOIN machine_tx ON machine_tx.tx_id = machine_tx_details.tx_id WHERE machine_tx_details.status = 'APPROVED' $where GROUP BY machine_tx_details.tx_id ";
+$sql = " SELECT machine_tx.* FROM `machine_tx_details` LEFT JOIN machine_tx ON machine_tx.tx_id = machine_tx_details.tx_id WHERE machine_tx_details.status = 'RECEIVED' $where GROUP BY machine_tx_details.tx_id ";
 $rs = $conn->query($sql);
 $i=0;
  while($row = $conn->parseArray($rs)){

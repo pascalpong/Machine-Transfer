@@ -11,7 +11,7 @@ if($tx_id != ''){
 
  
 
-$sql = " SELECT * FROM machine_tx_history WHERE 1=1 $where AND transfer_status = 'ORIGINAL' ORDER BY mc_code ASC ";
+$sql = " SELECT * FROM machine_tx_history WHERE 1=1 $where AND transfer_status = 'ACTIVE' ORDER BY mc_code ASC ";
 
 
 $rs = $conn->query($sql);

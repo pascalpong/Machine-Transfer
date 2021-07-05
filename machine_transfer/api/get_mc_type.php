@@ -26,7 +26,11 @@ if($mc_type != ''){
      $rsMcTx = $conn->query($McTx);
      $dataMcTx = $conn->parseArray($rsMcTx);
 
-$sql = " SELECT machine_type.* FROM machine LEFT JOIN machine_type ON machine_type.code = machine.machine_type  WHERE machine_type.status = 'A'  $andFac $andNotInclude $andMcType AND machine.factory='{$dataMcTx['lending_factory']}'   ";
+$sql = " SELECT machine_type.* FROM machine LEFT JOIN machine_type ON machine_type.code = machine.machine_type  WHERE machine_type.status = 'A'  $andFac $andNotInclude $andMcType AND machine.factory='{$dataMcTx['lending_factory']}' GROUP BY machine_type.code   ";
+
+
+// echo $sql ;
+
 $rs = $conn->query($sql);
 $i=0;
 while($row = $conn->parseArray($rs)){

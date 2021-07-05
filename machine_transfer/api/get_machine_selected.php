@@ -34,4 +34,4 @@ $i=0;
  $i++ ; }
 
 
-echo json_encode(array('data'=>$data,'count'=>count($data)));
+echo json_encode(array('data'=>$data));

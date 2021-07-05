@@ -42,7 +42,7 @@ $sql = " SELECT machine.machine_location, count(machine.code) AS amt ,machine_lo
         . "FROM machine LEFT JOIN "
         . "machine_location ON machine_location.code  = machine.machine_location "
         . "WHERE 1=1  $andType  $notIncludeReal $andLocation GROUP BY machine.machine_location $andLimit ";
-//echo $sql;
+// echo $sql;
 $rs = $conn->query($sql);
 $i=0;
  while($row = $conn->parseArray($rs)){
@@ -81,4 +81,4 @@ $i=0;
  $i++ ; }
 
 
-echo json_encode(array('data'=>$data,'count'=>count($data),'dataDetails'=>$dataDetails,'countMcDetails'=>count($dataDetails)));
+echo json_encode(array('data'=>$data,'dataDetails'=>$dataDetails));

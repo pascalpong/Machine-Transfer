@@ -6,12 +6,13 @@ $conn = new Connect();
 if($_SESSION['username']=='admin'){
     $where = "";
 }else{
-    $where = " AND borrowing_factory = '{$_SESSION['factory']}' ";
+    $where = " AND (borrowing_factory = '{$_SESSION['factory']}' OR lending_factory = '{$_SESSION['factory']}' )";
 }
 
  
 
-$sql = " SELECT * FROM machine_tx WHERE 1=1   ";
+$sql = " SELECT * FROM machine_tx WHERE 1=1 $where AND (status = '' OR status = null)   ";
+// echo $sql; 
 $rs = $conn->query($sql);
 $i=0;
  while($row = $conn->parseArray($rs)){
@@ -33,4 +34,4 @@ $i=0;
  $i++ ; }
 
 
-echo json_encode(array('data'=>$data,'count'=>count($data)));
+echo json_encode(array('data'=>$data));

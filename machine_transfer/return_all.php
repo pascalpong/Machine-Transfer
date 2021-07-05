@@ -8,6 +8,14 @@ $_GET['txtype'] = $conn->detectParam($_GET['txtype']);
 //echo $_GET['txtype'];
 //exit();
 ?>
+<?php
+
+
+
+
+
+
+    ?>
 <html lang="en">
     <head>
         <meta charset="utf-8">
@@ -34,12 +42,11 @@ $_GET['txtype'] = $conn->detectParam($_GET['txtype']);
         <script src="../full/assets/js/app.js"></script>
         <script src="../global_assets/js/demo_pages/dashboard.js"></script>
         <script src="../global_assets/js/demo_pages/layout_fixed_sidebar_custom.js"></script>
+        
         <script type="text/javascript">
             $(document).ready(function () {
                 setDataTable();
             });
-
-
 
             function setDataTable() {
                 var $_GET = <?php echo json_encode($_GET); ?>;
@@ -48,19 +55,19 @@ $_GET['txtype'] = $conn->detectParam($_GET['txtype']);
                 var limit = $_GET.limit != null ? $_GET.limit : 10;
                 var txtype = $_GET.txtype != null ? $_GET.txtype : "";
 //                var tex = 
-                var linkfromx = "create_transfer?id="   ;
+                var linkfromx = "return_transfer?id="   ;
 //                alert(linkfromx) ;
                 document.getElementById('search').value = search;
-                $.get('api/get_machine_tx.php', {search: search, page: page, limit: limit,txtype: txtype}, function (data) {
+                $.get('api/get_machine_tx_received.php', {search: search, page: page, limit: limit,txtype: txtype}, function (data) {
                     json = $.parseJSON(data);
                     var kuymax = parseInt('1');
-
+                    
                     if(json.data==''||json.data==null){
                         var count = 0;
                     }else{
                         var count = json.data.length;
                     }
-
+                    
                     for (i = 0; i < count; i++) {
                       var run=  kuymax+i ;
                         $("#tbody").append("<tr style='text-align: left;cursor: pointer;'   >");
@@ -80,7 +87,8 @@ $_GET['txtype'] = $conn->detectParam($_GET['txtype']);
                         var light = $('#load').closest('.card');
                         $(light).unblock();
                     }, 250);
-                });
+                }
+                );
             }
 
             function oo(){
@@ -198,10 +206,7 @@ $_GET['txtype'] = $conn->detectParam($_GET['txtype']);
                            <h5 class="card-title"><?php echo $typedetails;?></h5>
                             <div class="header-elements">
                                 <div class="btn btn-link btn-float text-default">
-                                    <a href="create_transfer.php" > 
-                                        <i class="icon-plus-circle2 icon-2x  text-primary"></i>
-                                        <span>เพิ่ม</span>
-                                    </a>
+                                     
                                 </div>
 
                             </div>

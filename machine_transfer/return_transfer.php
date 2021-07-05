@@ -47,61 +47,7 @@ if($rowxx['language']=='eng'){
 	include $th_lang_count;
 }
 
-
-
-if (isset($_POST['savedata'])) {
-    
-    if(isset($_GET['id'])){
-    $sql = "UPDATE machine_tx SET etc  = '{$_POST['tx_details']}'  "
-    . " WHERE tx_id = '{$_GET['id']}' ";
-//    echo $sql;
-//    exit();
-    $rs = $conn->query($sql);
-    header("Location: create_transfer.php?id=".$_GET['id']); 
-    }else{
-    
-    $docNo = $_POST['docno'];
-    $lendingFactory = $_POST['lendingFac'];
-    $borrowingFactory = $_POST['borrowingFac'];
-    $etc = $_POST['tx_details'];
-    $creator = $_POST['creator'];
-    $creatorDept = $_POST['creator_dept'];
-    
-    
-    $genTxId = " SELECT tx_id FROM machine_tx WHERE lending_factory = '{$lendingFactory}' ORDER BY id DESC ";
-    $rsGenTxId = $conn->query($genTxId);
-    $dataGenTxId = $conn->parseArray($rsGenTxId);
-    
-    if(!$dataGenTxId['tx_id']){
-        $genId = 0;
-    }else{
-        $genId = explode('-', $dataGenTxId['tx_id']);
-        $genId = (int)$genId[2]+1;
-    }
-        $genNow = date("Y-m-d H:i:s");
-        $genThisYear = date("Y");
-    
-        $useGenId = $lendingFactory."-".$genThisYear."-".$genId;
-        
-    $getCountry = " SELECT lend.country_code AS countryLend , borrow.country_code AS countryBorrow FROM 
-                            (SELECT country_code FROM factory WHERE code = '{$lendingFactory}') AS lend,
-                            (SELECT country_code FROM factory WHERE code = '{$borrowingFactory}') AS borrow ";
-    $rsCountry = $conn->query($getCountry);
-    $dataCountry = $conn->parseArray($rsCountry);
-    
-    $time = date('Y-m-d H:i:s', time());
-    
-
-    $sql = "INSERT INTO machine_tx (tx_id,docno,etc,create_ts,creator,creator_dept,lending_factory,lending_country,lending_status,borrowing_factory,borrowing_country,borrowing_status) "
-    . "VALUES('{$useGenId}','{$docNo}','{$etc}','{$genNow}','{$creator}','{$creatorDept}','{$lendingFactory}','{$dataCountry['countryLend']}','0','{$borrowingFactory}','{$dataCountry['countryBorrow']}','0');";
-   // echo $sql ;
-   // exit();
-    
-    $rs = $conn->query($sql);
-    
-    header("Location: create_transfer.php?id=".$useGenId); 
-    }
-}
+ 
 
 
  
@@ -235,6 +181,10 @@ if (isset($_POST['savedata'])) {
                                 selectBorrowingFactory();
                                 selectFactory();
                         }else{
+
+                            getAllActive(code);
+
+
                             $.get("api/get_machine_tx_details.php",{tx_id:code},function(data){
                                 json = $.parseJSON(data);
                                 
@@ -248,10 +198,8 @@ if (isset($_POST['savedata'])) {
                                     $("#country").val(json['lending_country']);
                                     $("#borrowingFac").append("<option  value='"+json['borrowing_factory']+"' >"+json['borrowing_factory']+" : "+json['borrowing_factory_nameth']+"</option>");
                                     $("#borrowingCountry").val(json['borrowing_country']);
-                                    
-                                     selectMcType(json['tx_id']);
-                                                             $("#existingAmt").hide();
-                                     $.get("api/get_machine_tx_details_info.php",{tx_id:json['tx_id']},function(data){
+        
+                                     $.get("api/get_machine_tx_details_info_received.php",{tx_id:json['tx_id']},function(data){
                                          json = $.parseJSON(data);
                                          
                                          if(json.count <= 0){
@@ -261,20 +209,17 @@ if (isset($_POST['savedata'])) {
                                             for(a=0;a<json.count;a++){
 
                                                 $("#machineTypeTransferDetails").append("<tr>");
-                                                $("#machineTypeTransferDetails").append("<td>ประเภท : <br>"+json.data[a]['mc_type']+"</td>");
-                                                $("#existingAmt").show();
-                                                var mc_type = json.data[a]['mc_type'];
-                                                var borrow_location = json.data[a]['borrowing_location'];
-                                               // $.get("api/get_available_machines.php",{mc_type:mc_type,mc_location:borrow_location},function(data){
-                                               //     json = $.parseJSON(data);
-                                               //     for(i=0;i<json.count;i++){
-                                               //         $("#existingAmt").append("<input value='"+json.data[i]['amt']+"' id='existAmt' hidden />");
-                                               //         $("#existingAmt").append("(จำนวนที่มีอยู่ : "+json.data[i]['amt']+")");
-                                               //     }
-                                               // });
-                                                var checkMcClick = "selectMachineToLend('"+json.data[a]['mc_type']+"')";    
-                                                $("#machineTypeTransferDetails").append("<td>จำนวนที่ขอยืม :  "+json.data[a]['amt']+"<b style='color:red' id='existingAmt'></b><input class='form-control primary-btn' type='button'  onclick="+checkMcClick+" value='Machine Listed'/></td>");
-                                                $("#machineTypeTransferDetails").append("<td>วันที่ขอยืม : "+json.data[a]['start_date']+"<br>วันที่คืน : "+json.data[a]['end_date']+"</td>");
+                                                var onclickCheck = "toAssign('"+json.data[a]['mc_code']+"')"
+
+                                                var inputCheckBox = "<input class='form-control' style='width:100%' id='check_"+json.data[a]['mc_code']+"' onclick="+onclickCheck+" type='checkbox' value='0' />"
+                                                $("#machineTypeTransferDetails").append("<td>"+inputCheckBox+"</td>");
+                                                $("#machineTypeTransferDetails").append("<td>"+json.data[a]['mc_type']+"</td>");
+                                                $("#machineTypeTransferDetails").append("<td>"+json.data[a]['mc_code']+"</td>");
+                                                $("#machineTypeTransferDetails").append("<td>"+json.data[a]['mc_dept']+"</td>");
+                                                $("#machineTypeTransferDetails").append("<td>"+json.data[a]['mc_room']+"</td>");
+                                                $("#machineTypeTransferDetails").append("<td>"+json.data[a]['mc_location']+"</td>");
+                                                $("#machineTypeTransferDetails").append("<td>"+json.data[a]['factory']+"</td>");
+                                                $("#machineTypeTransferDetails").append("<td>"+json.data[a]['transfer_ts']+"</td>");
                                                 $("#machineTypeTransferDetails").append("</tr>");
                                              
                                             }
@@ -287,6 +232,27 @@ if (isset($_POST['savedata'])) {
                              
                         }
                     }
+
+                    function getAllActive(tx_id){
+
+
+                        $.get("api/get_all_returned.php",{tx_id:tx_id},function(data){
+                            json=$.parseJSON(data);
+
+                            for(i=0;i<json.data.length;i++){
+                                $("#transferReadyInfo").append("<tr>");
+                                $("#transferReadyInfo").append("<td>"+"<input type='checkbox' class='form-control' >"+"</td>");
+                                $("#transferReadyInfo").append("<td>"+json.data[i]['mc_code']+"</td>");
+                                $("#transferReadyInfo").append("<td>"+json.data[i]['mc_dept']+"</td>");
+                                $("#transferReadyInfo").append("<td>"+json.data[i]['mc_location']+"</td>");
+                                $("#transferReadyInfo").append("<td>"+json.data[i]['mc_room']+"</td>");
+                                $("#transferReadyInfo").append("</tr>");
+                            }
+
+                        });
+
+                    }
+
 
 
 </script>
@@ -308,6 +274,117 @@ if (isset($_POST['savedata'])) {
             <!--<div class="content">-->
 
                 <script>
+                    var allMcSelected = [];
+                    var factory_to_return = $("#lendingFac").val();
+                    var tx_id = "<?php echo $_GET['id'] ?>";
+
+                    $( document ).ready(function() {
+
+                        getDept();
+ 
+                    });
+
+                    function toAssign(mc_code){
+
+                        // alert($("#check_"+mc_code).val());
+
+                      if($("#check_"+mc_code).val()==0){
+                        $("#check_"+mc_code).val('1');
+                        allMcSelected.push(mc_code);
+                        console.log('push');
+                      }else{
+                        if($("#check_"+mc_code).val()==1){
+                        $("#check_"+mc_code).val('0');
+
+                        for(i=0;i<allMcSelected.length;i++){
+                            if(allMcSelected[i] == mc_code){
+                                allMcSelected.splice(i,1);
+                            }
+
+                        }
+                        console.log('splice');
+
+                      }
+                      }
+
+                        
+
+
+                      // if($("#check_"+mc_code).val()=="0")
+                
+                       console.log(allMcSelected);
+
+                    }
+
+                    function getDept(){
+
+                       $.get("api/get_department_by_lending_factory.php",{tx_id:tx_id},function(data){
+                            json = $.parseJSON(data);
+
+                            // alert(json.data.length);
+                                $("#newDept").append("<option>"+"Please Select a Machine Department"+"</option>");
+
+                                if(json.data==null|| json.data==''){
+                                    var count = 0;
+                                }else{
+                                    var count = json.data.length;
+                                }
+                            for(i=0;i<count;i++){
+                                // alert(json.data[i]['code']);
+                                $("#newDept").append("<option value='"+json.data[i]['code']+"'>"+json.data[i]['code']+" : "+json.data[i]['nameth']+"</option>");
+                            }
+ 
+                        }); 
+                    }
+
+                    function afterDept(){
+                        $("#newRoom").empty();
+                        var mcDept = $("#newDept").val();
+
+                        $.get("../data/machine/api/get_room_by_dept.php",{mc_dept:mcDept},function(data){
+                            json = $.parseJSON(data);
+                                $("#newRoom").append("<option value=''>"+"Please Select a Machine Room"+"</option>");
+                             for(i=0;i<json.data.length;i++){
+                                $("#newRoom").append("<option value='"+json.data[i]['code']+"'>"+json.data[i]['code']+" : "+json.data[i]['nameth']+"</option>");
+                             }
+
+                        });
+                    }
+
+                    function afterRoom(){
+                        $("#newLocation").empty();
+                        var mcRoom = $("#newRoom").val();
+
+                        $.get("api/get_mc_location_by_room.php",{mc_room:mcRoom},function(data){
+                            json = $.parseJSON(data);
+                                $("#newLocation").append("<option value=''>"+"Please Select a Machine Location"+"</option>");
+                             for(i=0;i<json.data.length;i++){
+                                $("#newLocation").append("<option value='"+json.data[i]['code']+"'>"+json.data[i]['code']+" : "+json.data[i]['nameth']+"</option>");
+                             }
+                        });
+                        
+                    }
+                    
+                    function afterLoca(){
+                        
+                        
+                        
+                    }
+
+                    function approveReceive(tx_id){
+                        $.post("api/update_confirm_return.php",{tx_id:tx_id},function(data){
+                            json = $.parseJSON(data);
+                            if(json=='0'){
+                                alert("No machine Transferred");
+                                window.location.replace("return_transfer?id="+tx_id);  
+                            }else{
+                                window.location.replace("return_transfer?id="+tx_id);   
+                            }
+                             
+                            
+                            
+                        });
+                    }
 
                     
                     function selectMachineToLend(mc_type){
@@ -315,126 +392,38 @@ if (isset($_POST['savedata'])) {
                             $("#myModal").modal();
                             $("#myframeprint").attr("src", "modal/machine_lists.php?tx_id="+tx_id+"&mc_type="+mc_type);
                     }
-                    
-                    
-                    function selectFactory(code){
 
+                    function assignSelectedMachines(){
+                        
+                        var tx_id = '<? echo $_GET['id'] ?>';
 
-                        var sessionFactory = '<? echo $_SESSION['factory'] ?>';
-                        var tx_id = "<? echo $_GET['id'] ?>";
+                        var dept = $("#newDept").val();
+                        var room = $("#newRoom").val();
+                        var loca = $("#newLocation").val();
 
-                        if(!code){
-
-
-                            $.get("../data/location/api/get_factory.php",{code:code,tx_id:tx_id},function(data){
-                                json = $.parseJSON(data);
-                                for(i=0;i<json.data.length;i++){
-                                        if(sessionFactory==json.data[i]['code']){
-                                            var selected = 'selected';    
-                                        }else{
-                                            var selected = '';    
-                                        }
-                                    $("#lendingFac").append("<option "+selected+" value='"+json.data[i]["code"]+"' >"+json.data[i]["nameth"]+"</option>");
-                                    $("#country").val(json.data[i]["country_code"]);
-                                }
-                            });
-
-
-                        }else{
-
-
-                            $.get("api/load_lending_factory.php",{code:code,tx_id:tx_id},function(data){
-                                json = $.parseJSON(data);
-                                for(i=0;i<json.count;i++){
-                                        if(sessionFactory==json.data[i]['fac_code']){
-                                            var selected = 'selected';    
-                                        }else{
-                                            var selected = '';    
-                                        }
-                                    $("#lendingFac").append("<option "+selected+" value='"+json.data[i]["fac_code"]+"' >"+json.data[i]["fac_nameth"]+"</option>");
-                                    $("#country").val(json.data[i]["country_code"]);
-                                }
-                            });
-
-
+                        if(allMcSelected.length == null || allMcSelected.length == ''){
+                            alert('กรุณาใส่ข้อมูลให้ครบ');
+                            return false;
                         }
-                    }
-                    
-                    function selectBorrowingFactory(code){
-                            var tx_id = "<? echo $_GET['id'] ?>";
-                            $.get("api/load_borrowing_factory.php",{code:code,tx_id:tx_id},function(data){
+
+                        if(dept == '' || dept == null || room == '' || room == null || loca == '' || loca == null){
+                            alert('กรุณาใส่ข้อมูลให้ครบ');
+                            return false;
+                        }else{
+                            $.post("api/update_approve_return.php",{tx_id:tx_id,allMcSelected:allMcSelected,mc_dept:dept,mc_room:room,mc_lcoation:loca},function(data){
                                 json = $.parseJSON(data);
-                                for(i=0;i<json.count;i++){
-                                    $("#borrowingFac").append("<option  value='"+json.data[i]["fac_code"]+"' >"+json.data[i]["fac_nameth"]+"</option>");
-                                    $("#borrowingCountry").val(json.data[i]["country_code"]);
+
+                                if(json=='1'){
+                                    window.location.replace("return_transfer?id="+tx_id);
                                 }
+                                
+                                
                             });
-                    }
-                    
-                    function selectMcType(tx_id,select){
-
-                    $.get("api/get_mc_type.php",{tx_id:tx_id},function(data){
-                        json = $.parseJSON(data);   
-                        for(i=0;i<json.count;i++){
-                        $("#selectMcType").append("<option value='"+json.data[i]['code']+"' >"+json.data[i]['code']+" : "+json.data[i]['nameth']+"</option>");
-                    }
-                    });
- 
-                    }
-                    
-                    function confirmSelectMcType(){
-
-                        $("#mcTypeDetails").empty();
-                        $("#submitAppears").empty();
-                    var selectMcType = $("#selectMcType").val();
-                    $("#submitAppears").append("<input style='' class='form-control' type='button' id='confirmMcType' onclick='insertTxDetails()' value='Confirm' >");
-                    $("#tfDetails").show(); 
-                    
-                    $.get("api/get_available_machines.php",{mc_type:selectMcType},function(data){
-                                json = $.parseJSON(data);
-//                        alert(json.count);
-                    $("#mcTypeDetails").append("<td>"+"<? echo 'ประเภทเครื่องจักร : ' ?>"+"<br><b>"+selectMcType+"</b><input hidden class='form-control' id='typeSelect' type='text' readonly /></td>");
-                    $("#mcTypeDetails").append("<td>"+"<? echo 'Location : ' ?>"+"<select class='form-control' id='mcLocation' ></select>"+"<? echo 'จำนวน : ' ?>"+"<input class='form-control' id='amtBorrow' type='number' />จำนวนเครื่องจักรที่มี : <b style='color:red' id='amtAvailable' ></b></td>");
-                    $("#mcTypeDetails").append("<td>"+"<? echo 'วันที่ยืม : ' ?>"+"<input class='form-control form-control-sm date-picker'  id='startDate' type='text' readonly value='' />"+"<? echo 'วันที่คืน : ' ?>"+"<input class='form-control form-control-sm date-picker'  id='endDate' type='text' readonly value=' ' /></td>");
-                    $("#typeSelect").val(selectMcType);
+                        }
 
 
-                    if(json.data==''||json.data==null){
-                        json.data.length=0;
                     }
-                       
-                    for(i=0;i<json.data.length;i++){
-                            
-                            $("#mcLocation").append("<option val='"+json.data[i]['mc_location']+"' >"+json.data[i]['mc_location']+"</option>");
-                            $("#amtAvailable").append(json.data[i]['amt']);
-                            }
-                            
-                    });
-                    
-            
-                    }
-                    function insertTxDetails(){
-                    
-                        var tx_id = $("#tx_code").val();
-                        var mcType = $("#typeSelect").val();
-                        var startDate = $("#startDate").val();
-                        var endDate = $("#endDate").val();
-                        var amt = $("#amtBorrow").val();
-                        var borrowing_location = $("#mcLocation").val();
-
-//                        alert(mcType);
-                          $.get("api/insert_machine_tx_details.php",{mc_type:mcType,tx_id:tx_id,amt:amt,borrowing_location:borrowing_location,start_date:startDate,end_date:endDate},function(data){
-                            json = $.parseJSON(data);
-                            if(json == 1){
-                                window.location.replace("create_transfer?id="+tx_id);
-                            }
-                    });                  
-                    }
-                    
-                    function selectMachineTransfer(mc_code){
-                        $("#myModal").modal('hide');
-                        alert(mc_code);
-                    }
+           
                     
  
 function onLoad(value) {
@@ -461,48 +450,10 @@ function onLoad(value) {
     }
 
 }
-
-function clickSelectInv(code) {
-    $('#modalDialog').modal('hide');
-    $("#inv_code").val(code);
-}
-
-function clickSelectStore(code) {
-    $('#modalDialogST').modal('hide');
-    $("#store_code").val(code);
-}
-
-function clickSelectLocation(code) {
-    $('#modalDialogLC').modal('hide');
-    $("#loca_code").val(code);
-} 
-
  
 
-function approveTransfer(){
-    var id = '<?php echo $_GET['id']?>'
-
-    // alert(id);
-     confirm = confirm("Do you want to approve this transfer?");
-        if (confirm == true) {
-            // alert(id);
-            $.post("api/update_approve_transfer.php",{tx_id:id},function(data){
-                    json = $.parseJSON(data);
-
-                    if(json>0){
-                        alert(json+'Machine(s) have already been selected for the transfer');
-                        
-                    }else{
-                        alert('transaction failed');
-                    }
-                    window.location.replace("create_transfer?id="+id);
-            });
-        } else {
-          // alert('adsfasdfasdf');
-          return false;
-        }
-
-}
+ 
+ 
 </script>
 
 <!-- Page header -->
@@ -627,7 +578,7 @@ function approveTransfer(){
                             <div class="form-group row">
                                 <label class="col-form-label col-lg-4">โรงงานที่ให้ยืม : </label>
                                 <div class="col-lg-8" >
-                                    <select class="form-control" id="lendingFac" name="lendingFac"  ></select>
+                                    <select class="form-control" id="lendingFac" name="lendingFac" onchange="selectFactory()" ></select>
                              </div>
                          </div>  
                      </div>
@@ -681,9 +632,8 @@ function approveTransfer(){
 
                 <div class="text-right">
  
-                    <button type="submit" id="savedata"  name="savedata"  class="btn btn-primary">บันทึก <i class="icon-paperplane ml-2"></i>
-                    </button>
-                    <button type="button" id="approveLending" onclick="approveTransfer()" name="approveLending"  class="btn btn-primary">Approve Transfer<i class="icon-rating ml-2"></i>
+                     
+                    <button type="button" id="approveLending" onclick="approveReceive('<?php echo $_GET['id'] ?>')"   class="btn btn-primary">Approve Transfer<i class="icon-rating3 ml-2"></i>
                     </button>
  
             </div>
@@ -692,6 +642,43 @@ function approveTransfer(){
 </div>
 
 <form action=""  method="post">
+
+<div  id="detailsMachineTx"  class="card">
+        <div class="card-body">
+            <div class="row">
+                <div class="table-responsive">
+                    <span class="font-weight-semibold">RETURN TO : </span>
+                    <table class="table  table-xs table-bordered table-framed" style='font-family: Roboto,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+                    font-size: .8125rem;
+                    font-weight: 400;
+                    line-height: 1.5385;
+                    color: #333;'>
+                    <thead class="bg-slate-800">
+                        <tr style="width:100%">
+                            <th style="text-align:center;width:20%"> Department : <select class="form-control" id="newDept" onchange="afterDept()" ></select> </th>
+                            <th style="text-align:center;width:20%"> Room : <select class="form-control" id="newRoom" onchange="afterRoom()" ></select></th>
+                            <th style="text-align:center;width:20%"> Location : <select class="form-control" id="newLocation" onchange="afterLoca()" ></select></th>
+                            <th style="text-align:center;width:5%"><input style="width:100%" class="btn btn-primary" type="button" id="assign" onclick="assignSelectedMachines()" value="Submit" name=""></th>
+
+                        </tr>
+                    </thead>
+                     
+                    <tbody id="assignNew">
+                    </tbody>
+                    </table>
+
+                </div>
+            </div> 
+
+        </div>  
+    </div>
+
+
+
+
+
+
+
  
     <div  id="detailsMachineTx"  class="card">
         <div class="card-body">
@@ -703,20 +690,20 @@ function approveTransfer(){
                     line-height: 1.5385;
                     color: #333;'>
                     <thead class="bg-slate-800">
-                        <tr>
-                            <th style="text-align:center;"> ประเภทเครื่องจักรที่ขอยืม </th>
-                            <th style="text-align:right;"> <div class="row"><select style="width:100%" class="form-control" id="selectMcType" name="selectMcType" onchange="confirmSelectMcType()" >
-                                <option value='' >Please Select a Machine Type</option>
-                            </select> </div></th>
-                            <th style="text-align:center" id="submitAppears">Date</th>
+                        <tr style="width:100%">
+                            <th style="text-align:center;width:5%"> # </th>
+                            <th style="text-align:center;width:10%"> Machine type </th>
+                            <th style="text-align:center;width:20%"> Machine Code </th>
+                            <th style="text-align:center;width:15%"> Machine Department </th>
+                            <th style="text-align:center;width:15%"> Machine Room </th>
+                            <th style="text-align:center;width:15%"> Machine Location </th>
+                            <th style="text-align:center;width:15%"> Machine Factory </th>
+                            <th style="text-align:center;width:15%" id="submitAppears">Date</th>
 
                         </tr>
                     </thead>
-                    <tbody id="tfDetails">
-                        <tr id="mcTypeDetails">
-                        </tr>
-                    </tbody>
-                    <tbody id="machineTypeTransferDetails">
+                     
+                    <tbody id="machineTypeTransferDetails" >
                     </tbody>
                     </table>
 
@@ -725,6 +712,43 @@ function approveTransfer(){
 
         </div>  
     </div>
+
+
+
+
+<div  id="detailsMachineTx"  class="card">
+        <div class="card-body">
+            <div class="row">
+                <div class="table-responsive">
+                    <span class="font-weight-semibold">RETURNED TO : </span>
+                    <table class="table  table-xs table-bordered table-framed" style='font-family: Roboto,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+                    font-size: .8125rem;
+                    font-weight: 400;
+                    line-height: 1.5385;
+                    color: #333;'>
+                    <thead class="bg-slate-800" id='transferReady'>
+                        <tr style="width:100%">
+                            <th style="text-align:center;width:5%" >#</th>
+                            <th style="text-align:center;width:20%" >Code</th>
+                            <th style="text-align:center;width:5%" >Department</th>
+                            <th style="text-align:center;width:5%" >Location</th>
+                            <th style="text-align:center;width:5%" >Room</th>
+                        </tr>
+                    </thead>
+                     
+                    <tbody id="transferReadyInfo">
+                    </tbody>
+                    </table>
+
+                </div>
+            </div> 
+
+        </div>  
+    </div>
+
+
+
+
 
     </form>    
 

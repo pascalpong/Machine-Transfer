@@ -181,6 +181,10 @@ if($rowxx['language']=='eng'){
                                 selectBorrowingFactory();
                                 selectFactory();
                         }else{
+
+                            getAllActive(code);
+
+
                             $.get("api/get_machine_tx_details.php",{tx_id:code},function(data){
                                 json = $.parseJSON(data);
                                 
@@ -228,6 +232,27 @@ if($rowxx['language']=='eng'){
                              
                         }
                     }
+
+                    function getAllActive(tx_id){
+
+
+                        $.get("api/get_all_active.php",{tx_id:tx_id},function(data){
+                            json=$.parseJSON(data);
+
+                            for(i=0;i<json.data.length;i++){
+                                $("#transferReadyInfo").append("<tr>");
+                                $("#transferReadyInfo").append("<td>"+"<input type='checkbox' class='form-control' >"+"</td>");
+                                $("#transferReadyInfo").append("<td>"+json.data[i]['mc_code']+"</td>");
+                                $("#transferReadyInfo").append("<td>"+json.data[i]['mc_dept']+"</td>");
+                                $("#transferReadyInfo").append("<td>"+json.data[i]['mc_location']+"</td>");
+                                $("#transferReadyInfo").append("<td>"+json.data[i]['mc_room']+"</td>");
+                                $("#transferReadyInfo").append("</tr>");
+                            }
+
+                        });
+
+                    }
+
 
 
 </script>
@@ -315,7 +340,28 @@ if($rowxx['language']=='eng'){
                              for(i=0;i<json.data.length;i++){
                                 $("#newLocation").append("<option value='"+json.data[i]['code']+"'>"+json.data[i]['code']+" : "+json.data[i]['nameth']+"</option>");
                              }
+                        });
+                        
+                    }
+                    
+                    function afterLoca(){
+                        
+                        
+                        
+                    }
 
+                    function approveReceive(tx_id){
+                        $.post("api/update_confirm_receive.php",{tx_id:tx_id},function(data){
+                            json = $.parseJSON(data);
+                            if(json=='0'){
+                                alert("No machine Transferred");
+                                window.location.replace("receive_transfer?id="+tx_id);  
+                            }else{
+                                window.location.replace("receive_transfer?id="+tx_id);   
+                            }
+                             
+                            
+                            
                         });
                     }
 
@@ -327,13 +373,25 @@ if($rowxx['language']=='eng'){
                     }
 
                     function assignSelectedMachines(){
+                        
+                        var tx_id = '<? echo $_GET['id'] ?>';
 
                         var dept = $("#newDept").val();
                         var room = $("#newRoom").val();
                         var loca = $("#newLocation").val();
 
                         if(dept == '' || dept == null || room == '' || room == null || loca == '' || loca == null){
-                            alert('กรุณา');
+                            alert('กรุณาใส่ข้อมูลให้ครบ');
+                        }else{
+                            $.post("api/update_approve_receive.php",{tx_id:tx_id},function(data){
+                                json = $.parseJSON(data);
+
+                                if(json=='1'){
+                                    window.location.replace("receive_transfer?id="+tx_id);
+                                }
+                                
+                                
+                            });
                         }
 
 
@@ -547,9 +605,8 @@ function onLoad(value) {
 
                 <div class="text-right">
  
-                    <button type="submit" id="savedata"  name="savedata"  class="btn btn-primary">บันทึก <i class="icon-paperplane ml-2"></i>
-                    </button>
-                    <button type="button" id="approveLending" onclick="approveTransfer()" name="approveLending"  class="btn btn-primary">Approve Transfer<i class="icon-rating ml-2"></i>
+                     
+                    <button type="button" id="approveLending" onclick="approveReceive('<?php echo $_GET['id'] ?>')"   class="btn btn-primary">Approve Transfer<i class="icon-rating2 ml-2"></i>
                     </button>
  
             </div>
@@ -573,7 +630,7 @@ function onLoad(value) {
                         <tr style="width:100%">
                             <th style="text-align:center;width:20%"> Department : <select class="form-control" id="newDept" onchange="afterDept()" ></select> </th>
                             <th style="text-align:center;width:20%"> Room : <select class="form-control" id="newRoom" onchange="afterRoom()" ></select></th>
-                            <th style="text-align:center;width:20%"> Location : <select class="form-control" id="newLocation" ></select></th>
+                            <th style="text-align:center;width:20%"> Location : <select class="form-control" id="newLocation" onchange="afterLoca()" ></select></th>
                             <th style="text-align:center;width:5%"><input style="width:100%" class="btn btn-primary" type="button" id="assign" onclick="assignSelectedMachines()" value="Submit" name=""></th>
 
                         </tr>
@@ -591,34 +648,7 @@ function onLoad(value) {
 
 
 
-<div  id="detailsMachineTx"  class="card">
-        <div class="card-body">
-            <div class="row">
-                <div class="table-responsive">
-                    <span class="font-weight-semibold">TRANSFER TO : </span>
-                    <table class="table  table-xs table-bordered table-framed" style='font-family: Roboto,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
-                    font-size: .8125rem;
-                    font-weight: 400;
-                    line-height: 1.5385;
-                    color: #333;'>
-                    <thead class="bg-slate-800" id='transferReady'>
-                        <!-- <tr style="width:100%">
-                            <th style="text-align:center;width:20%" id="deptShown"></th>
-                            <th style="text-align:center;width:20%" id="roomShown"></th>
-                            <th style="text-align:center;width:20%" id="locationShown"></th>
-                            <th style="text-align:center;width:5%" id="#"></th>
-                        </tr> -->
-                    </thead>
-                     
-                    <tbody id="transferReadyInfo">
-                    </tbody>
-                    </table>
 
-                </div>
-            </div> 
-
-        </div>  
-    </div>
 
 
 
@@ -646,7 +676,7 @@ function onLoad(value) {
                         </tr>
                     </thead>
                      
-                    <tbody id="machineTypeTransferDetails">
+                    <tbody id="machineTypeTransferDetails" >
                     </tbody>
                     </table>
 
@@ -655,6 +685,43 @@ function onLoad(value) {
 
         </div>  
     </div>
+
+
+
+
+<div  id="detailsMachineTx"  class="card">
+        <div class="card-body">
+            <div class="row">
+                <div class="table-responsive">
+                    <span class="font-weight-semibold">TRANSFERRED TO : </span>
+                    <table class="table  table-xs table-bordered table-framed" style='font-family: Roboto,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+                    font-size: .8125rem;
+                    font-weight: 400;
+                    line-height: 1.5385;
+                    color: #333;'>
+                    <thead class="bg-slate-800" id='transferReady'>
+                        <tr style="width:100%">
+                            <th style="text-align:center;width:5%" >#</th>
+                            <th style="text-align:center;width:20%" >Code</th>
+                            <th style="text-align:center;width:5%" >Department</th>
+                            <th style="text-align:center;width:5%" >Location</th>
+                            <th style="text-align:center;width:5%" >Room</th>
+                        </tr>
+                    </thead>
+                     
+                    <tbody id="transferReadyInfo">
+                    </tbody>
+                    </table>
+
+                </div>
+            </div> 
+
+        </div>  
+    </div>
+
+
+
+
 
     </form>    
 
